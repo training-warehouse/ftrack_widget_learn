@@ -1,17 +1,31 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
+
+import {Session} from '@ftrack/api'
+import ftrackWidget from 'ftrack-web-widget'
+
+import {SessionProvider} from "./session_context";
 import './index.css';
 import App from './App';
-import reportWebVitals from './reportWebVitals';
 
-ReactDOM.render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>,
-  document.getElementById('root')
-);
+function onWidgetLoad() {
+    const credentials = ftrackWidget.getCredentials()
+    const session = new Session(credentials.serverUrl, credentials.apiUser, credentials.apiKey)
 
-// If you want to start measuring performance in your app, pass a function
-// to log results (for example: reportWebVitals(console.log))
-// or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
-reportWebVitals();
+    session.initializing.then(() => {
+        ReactDOM.render(
+            <SessionProvider value={session}>
+                <App/>
+            </SessionProvider>,
+            document.getElementById('root')
+        )
+    })
+}
+
+function onDomContentLoaded() {
+    ftrackWidget.initialize({
+        onWidgetLoad
+    })
+}
+
+window.addEventListener('DOMContentLoaded', onDomContentLoaded)
