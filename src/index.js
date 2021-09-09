@@ -10,7 +10,7 @@ import App from './App';
 
 function onWidgetLoad() {
     const credentials = ftrackWidget.getCredentials()
-    const session = new Session(credentials.serverUrl, credentials.apiUser, credentials.apiKey)
+    const session = new Session(credentials.serverUrl, credentials.apiUser, credentials.apiKey, {autoConnectEventHub: true})
 
     session.initializing.then(() => {
         ReactDOM.render(
