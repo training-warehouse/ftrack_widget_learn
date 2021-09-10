@@ -1,53 +1,84 @@
-import React, {useEffect, useState} from 'react'
+import React from 'react'
 
 import ftrackWidget from 'ftrack-web-widget'
 import {Event as FtrackEvent} from '@ftrack/api'
 
-import useSession from "./session_context";
+import {session} from "./index";
 import './App.css'
 
 function displayProjectInfo(id) {
     ftrackWidget.openSidebar('Project', id)
 }
 
-// todo 改成类的形式 用this.props.match.match.params去解析action传过来的id，
+// 用tgetQueryVariable去解析action传过来的id，
 //  然后再把id传回去，在后端再通过id去匹配之前的存到 entities_by_id 里面的所选择的对象
-function App() {
-    const [projects, setProjects] = useState([])
-    const session = useSession()
+class App extends React.Component {
+    constructor(props) {
+        super(props);
 
-    useEffect(() => {
+        this.state = {
+            projects: [],
+            variable: {}
+        }
+    }
+
+    componentDidMount() {
         session.query('select name from Project').then(res => {
-            setProjects(res.data)
-        }, [session])
-    })
+            this.setState({projects: res.data})
+        })
+        this.setState({variable: this.getQueryVariable()})
+    }
 
-    const onSend = () => {
+
+    onSend = () => {
+        console.log(this.state.variable)
         const event = new FtrackEvent('ftrack.action.launch',
-            {actionIdentifier: 'nftrack.action.Test',entity_id:'aaaaaaaaaaaaaaaaaaaaaaa'}
-            );
+            {
+                actionIdentifier: this.state.variable.identifier,
+                values: this.state.variable
+            }
+        );
         return session.eventHub.publish(event)
     }
 
-    return (
-        <div className="App">
-            <header className='App-header'>
-                {session.apiUser}
-            </header>
-            <main>
-                <ul>
-                    {projects.map(project => (
-                        <li onClick={() => {
-                            displayProjectInfo(project.id)
-                        }}>
-                            {project.name}
-                        </li>))}
-                </ul>
-                <button onClick={() => ftrackWidget.closeWidget()}>关闭</button>
-                <button onClick={onSend}>发送</button>
-            </main>
-        </div>
-    )
+    getQueryVariable() {
+        // 获取传过来的变量值
+        let href = window.location.href
+        let query = href.substring(href.indexOf('?') + 1);
+        let vars = query.split("&");
+        let obj = {}
+        for (let i = 0; i < vars.length; i++) {
+            let pair = vars[i].split("=");
+            obj[pair[0]] = pair[1]
+        }
+        return obj;
+    }
+
+    render() {
+        const {projects} = this.state
+
+        return (
+            <div className="App">
+                <header className='App-header'>
+                    {session.apiUser}
+                </header>
+                <main>
+                    <ul>
+                        {projects.map(project => (
+                            <li onClick={() => {
+                                displayProjectInfo(project.id)
+                            }}
+                                key={project.id}>
+                                {project.name}
+                            </li>))}
+                    </ul>
+                    <button onClick={() => ftrackWidget.closeWidget()}>关闭
+                    </button>
+                    <button onClick={this.onSend}>发送</button>
+                </main>
+            </div>
+        )
+    }
 }
 
 export default App

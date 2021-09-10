@@ -4,19 +4,18 @@ import ReactDOM from 'react-dom';
 import {Session} from '@ftrack/api'
 import ftrackWidget from 'ftrack-web-widget'
 
-import {SessionProvider} from "./session_context";
 import './index.css';
 import App from './App';
 
+export let session = null
+
 function onWidgetLoad() {
     const credentials = ftrackWidget.getCredentials()
-    const session = new Session(credentials.serverUrl, credentials.apiUser, credentials.apiKey, {autoConnectEventHub: true})
+    session = new Session(credentials.serverUrl, credentials.apiUser, credentials.apiKey, {autoConnectEventHub: true})
 
     session.initializing.then(() => {
         ReactDOM.render(
-            <SessionProvider value={session}>
-                <App/>
-            </SessionProvider>,
+            <App/>,
             document.getElementById('root')
         )
     })
